@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import type { SentMessageInfo } from 'nodemailer';
 
 // Create transporter with Gmail
 const transporter = nodemailer.createTransport({
@@ -29,12 +30,12 @@ export async function sendWaitlistWelcomeEmail(userEmail: string) {
       };
   
       // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Email timeout')), 10000)
       );
       
       const sendPromise = transporter.sendMail(mailOptions);
-      const info = await Promise.race([sendPromise, timeoutPromise]);
+      const info = await Promise.race([sendPromise, timeoutPromise]) as SentMessageInfo;
       
       console.log('Email sent:', info.messageId);
       return { success: true, messageId: info.messageId };
@@ -66,12 +67,12 @@ export async function sendAdminNotification(userEmail: string) {
       };
   
       // Add timeout here too
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Admin email timeout')), 10000)
       );
       
       const sendPromise = transporter.sendMail(mailOptions);
-      const info = await Promise.race([sendPromise, timeoutPromise]);
+      const info = await Promise.race([sendPromise, timeoutPromise]) as SentMessageInfo;
       
       console.log('Admin notification sent:', info.messageId);
       return { success: true };
