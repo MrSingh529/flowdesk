@@ -20,32 +20,30 @@ export async function POST(req: NextRequest) {
       .insert([{ email, created_at: new Date().toISOString() }]);
 
     if (error) {
-      // Duplicate email — treat as success but don't send email again
       if (error.code === "23505") {
         return NextResponse.json({ 
           success: true, 
           message: "already_exists",
-          note: "You're already on our waitlist!" 
         });
       }
       console.error("Supabase error:", error);
       return NextResponse.json({ error: "Database error" }, { status: 500 });
     }
 
-    // Send welcome email to user (don't await to avoid blocking response)
-    // We'll send it in the background, but log any errors
-    sendWaitlistWelcomeEmail(email).catch(err => {
-      console.error("Failed to send welcome email:", err);
-    });
+    // Send emails and log results
+    const emailResult = await sendWaitlistWelcomeEmail(email);
+    console.log("Welcome email result:", emailResult);
+    
+    const adminResult = await sendAdminNotification(email);
+    console.log("Admin notification result:", adminResult);
 
-    // Optional: Send admin notification (also in background)
-    sendAdminNotification(email).catch(err => {
-      console.error("Failed to send admin notification:", err);
-    });
+    if (!emailResult.success) {
+      console.error("Failed to send welcome email to:", email, emailResult.error);
+    }
 
     return NextResponse.json({ 
       success: true,
-      message: "Welcome email sent!" 
+      message: "Added to waitlist!" 
     });
   } catch (err) {
     console.error("API error:", err);
